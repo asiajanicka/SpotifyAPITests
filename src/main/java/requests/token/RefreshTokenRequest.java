@@ -1,11 +1,12 @@
-package requests;
+package requests.token;
 
-import endpoints.Routes;
+import urls.Endpoint;
 import io.restassured.response.Response;
+import requests.SpecBuilder;
 
 import static io.restassured.RestAssured.given;
 
-public class Token {
+public class RefreshTokenRequest {
     public static Response refreshToken(String clientId, String clientSecret, String refreshToken){
         return given(SpecBuilder.getTokenRequestSpec())
                 .formParam("client_id", clientId)
@@ -13,9 +14,8 @@ public class Token {
                 .formParam("refresh_token", refreshToken)
                 .formParam("grant_type", "refresh_token")
                 .when()
-                .post(Routes.API + Routes.TOKEN)
+                .post(Endpoint.API + Endpoint.TOKEN)
                 .then()
-                .spec(SpecBuilder.getResponseSpec())
                 .statusCode(200)
                 .extract()
                 .response();
