@@ -12,9 +12,9 @@ public class CreatePlaylistRequestDto {
     @JsonProperty("name")
     private String name;
     @JsonProperty("public")
-    private Boolean isPublic;
+    private String isPublic;
     @JsonProperty("collaborative")
-    private Boolean isCollaborative;
+    private String isCollaborative;
     @JsonProperty("description")
     private String description;
 }

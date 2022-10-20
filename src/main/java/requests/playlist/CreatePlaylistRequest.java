@@ -1,37 +1,21 @@
 package requests.playlist;
 
 import dtos.playlist.request.CreatePlaylistRequestDto;
-import io.restassured.response.Response;
-import urls.Endpoint;
 import dtos.playlist.response.CreatePlaylistResponseDto;
+import io.restassured.response.Response;
 import requests.SpecBuilder;
-
-import java.util.HashMap;
+import urls.Endpoint;
 
 import static io.restassured.RestAssured.given;
 
 public class CreatePlaylistRequest {
 
     public static CreatePlaylistResponseDto createPlaylist(String userId, String token, String name){
-        HashMap bodyParams = new HashMap<String, String>();
-        bodyParams.put("name", name);
-
+        CreatePlaylistRequestDto playlistRequest = new CreatePlaylistRequestDto();
+        playlistRequest.setName(name);
         return given(SpecBuilder.getRequestSpec())
                 .auth().oauth2(token)
-                .body(bodyParams)
-                .when()
-                .post(Endpoint.getPlaylists(userId))
-                .then()
-                .statusCode(201)
-                .extract()
-                .response()
-                .as(CreatePlaylistResponseDto.class);
-    }
-
-    public static CreatePlaylistResponseDto createPlaylist(String userId, String token, HashMap<String, String> payload){
-        return given(SpecBuilder.getRequestSpec())
-                .auth().oauth2(token)
-                .body(payload)
+                .body(playlistRequest)
                 .when()
                 .post(Endpoint.getPlaylists(userId))
                 .then()
@@ -55,12 +39,11 @@ public class CreatePlaylistRequest {
     }
 
     public static Response createPlaylistWithError(String userId, String token, String name){
-        HashMap bodyParams = new HashMap<String, String>();
-        bodyParams.put("name", name);
-
+        CreatePlaylistRequestDto playlistRequest = new CreatePlaylistRequestDto();
+        playlistRequest.setName(name);
         return given(SpecBuilder.getRequestSpec())
                 .auth().oauth2(token)
-                .body(bodyParams)
+                .body(playlistRequest)
                 .when()
                 .post(Endpoint.getPlaylists(userId))
                 .then()
@@ -73,17 +56,6 @@ public class CreatePlaylistRequest {
                 .auth().oauth2(token)
                 .when()
                 .body(playlistDto)
-                .post(Endpoint.getPlaylists(userId))
-                .then()
-                .extract()
-                .response();
-    }
-
-    public static Response createPlaylistWithError(String userId, String token, HashMap<String, String> payload){
-        return given(SpecBuilder.getRequestSpec())
-                .auth().oauth2(token)
-                .body(payload)
-                .when()
                 .post(Endpoint.getPlaylists(userId))
                 .then()
                 .extract()

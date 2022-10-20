@@ -1,9 +1,8 @@
 package requests;
 
+import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
-import urls.Endpoint;
-import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 import utils.SpotifyProperties;
@@ -28,6 +27,4 @@ public class SpecBuilder {
                 .addFilter(new ResponseLoggingFilter())
                 .build();
     }
-
-
 }

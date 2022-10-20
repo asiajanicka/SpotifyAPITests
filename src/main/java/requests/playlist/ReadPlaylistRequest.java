@@ -19,4 +19,14 @@ public class ReadPlaylistRequest {
                 .response()
                 .as(ReadPlaylistResponseDto.class);
     }
+
+    public static Response readPlaylistWithError(String token, String playlistId){
+        return given(SpecBuilder.getRequestSpec())
+                .auth().oauth2(token)
+                .when()
+                .get(Endpoint.getPlaylist(playlistId))
+                .then()
+                .extract()
+                .response();
+    }
 }
