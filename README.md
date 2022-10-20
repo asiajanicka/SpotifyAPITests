@@ -10,10 +10,11 @@ Test are written using:
 Features covered by tests:
 1) Create playlist
 
-Overview of Spotify API is available here:
-https://developer.spotify.com/documentation/web-api/reference/#/
+Overview of Spotify API is available here:  
+https://developer.spotify.com/documentation/web-api/reference/#/  
 https://developer.spotify.com/console/post-playlists/
 
-List of test cases covering mentioned features:
-
-Test report:
+List of test cases covering mentioned features:  
+https://github.com/asiajanicka/SpotifyAPITests/blob/main/src/test/java/docs/SpotifyAPITestCases.xlsx  
+Test report:  
+https://github.com/asiajanicka/SpotifyAPITests/blob/main/src/test/java/docs/SpotifyAPITestReport.xlsx
