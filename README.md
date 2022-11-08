@@ -9,6 +9,7 @@ Test are written using:
 
 Features covered by tests:
 1) Create playlist
+2) Add items (tracks) to playlist
 
 Overview of Spotify API is available here:  
 https://developer.spotify.com/documentation/web-api/reference/#/  
