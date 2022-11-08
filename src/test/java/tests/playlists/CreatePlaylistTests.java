@@ -5,11 +5,9 @@ import dtos.playlist.request.CreatePlaylistRequestDto;
 import dtos.playlist.response.CreatePlaylistResponseDto;
 import dtos.playlist.response.ReadPlaylistResponseDto;
 import dtos.playlist.response.base.BasePlaylistResponseDto;
-import io.restassured.path.json.JsonPath;
 import io.restassured.response.Response;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -18,35 +16,22 @@ import org.junit.jupiter.params.provider.CsvFileSource;
 import requests.playlist.AddItemsToPlaylistRequest;
 import requests.playlist.CreatePlaylistRequest;
 import requests.playlist.ReadPlaylistRequest;
-import requests.users.UnfollowPlaylistRequest;
+import utils.MyAssertions;
 import utils.SampleNames;
 import utils.SpotifyProperties;
 import utils.TokenManager;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CreatePlaylistTests {
-
-    private static String token;
-    private static String tokenOfOtherUser;
-    private static String playlistId;
-
+public class CreatePlaylistTests extends BasePlaylistTests  {
 
     @BeforeAll
-    public static void setUp(){
+    public void setUp(){
         token = TokenManager.getToken();
         tokenOfOtherUser = TokenManager.getOtherUserToken();
-    }
-
-    @AfterEach
-    public void beforeEach(){
-        if(playlistId != null){
-            UnfollowPlaylistRequest.unfollowPlaylist(token, playlistId);
-            playlistId = null;
-        }
     }
 
     @Test
@@ -70,13 +55,9 @@ public class CreatePlaylistTests {
         ReadPlaylistRequest.readPlaylist(tokenOfOtherUser, playlistId);
 
         // Step - the other user can not add track to playlist as it's not collaborative by default
-        ArrayList<String> uris = new ArrayList<>();
-        uris.add(SampleNames.trackId);
-        AddItemsToPlaylistRequestDto items = new AddItemsToPlaylistRequestDto();
-        items.setUris(uris);
-
-        Response response = AddItemsToPlaylistRequest.addItemsWithError(playlistId, tokenOfOtherUser, items);
-        assertErrorResponse(response, 403, "You cannot add tracks");
+        Response response = AddItemsToPlaylistRequest
+                .addItemsWithError(playlistId, tokenOfOtherUser, List.of(SampleNames.trackUri));
+        MyAssertions.assertErrorResponse(response, 403, "You cannot add tracks");
     }
 
     private void assertBasicPlaylistParams(BasePlaylistResponseDto playlistResponse,
@@ -101,22 +82,6 @@ public class CreatePlaylistTests {
         soft.assertThat(playlistResponse.getOwner().getId())
                 .as("playlist's owner id is incorrect")
                 .isEqualTo(expectedUserId);
-        soft.assertAll();
-    }
-
-    private void assertErrorResponse(Response response, int expectedStatusCode, String expectMessage){
-        assertThat(response.statusCode())
-                .as("Status code is different then expected")
-                .isEqualTo(expectedStatusCode);
-
-        JsonPath json = response.jsonPath();
-        SoftAssertions soft = new SoftAssertions();
-        soft.assertThat(json.getString("error.status"))
-                .as("Status code in json response is different then expected")
-                .isEqualTo(String.valueOf(expectedStatusCode));
-        soft.assertThat(json.getString("error.message"))
-                .as("Response json doesn't contain info about incorrect name")
-                .contains(expectMessage);
         soft.assertAll();
     }
 
@@ -152,7 +117,7 @@ public class CreatePlaylistTests {
     public void CP4_dontCreatePlaylistWithEmptyNameTest(){
         final Response response = CreatePlaylistRequest
                 .createPlaylistWithError(SpotifyProperties.getUserId(), token, "");
-        assertErrorResponse(response, 400, "Missing required field: name");
+        MyAssertions.assertErrorResponse(response, 400, "Missing required field: name");
     }
 
     @Test
@@ -161,7 +126,7 @@ public class CreatePlaylistTests {
         CreatePlaylistRequestDto playlistRequest = new CreatePlaylistRequestDto();
         final Response response = CreatePlaylistRequest
                 .createPlaylistWithError(SpotifyProperties.getUserId(), token, playlistRequest);
-        assertErrorResponse(response, 400, "Missing required field: name");
+        MyAssertions.assertErrorResponse(response, 400, "Missing required field: name");
     }
 
     @Test
@@ -214,7 +179,7 @@ public class CreatePlaylistTests {
 
         // Step - the other user shouldn't be able to read private list
         Response response = ReadPlaylistRequest.readPlaylistWithError(tokenOfOtherUser, playlistId);
-        assertErrorResponse(response, 400, "No access");
+        MyAssertions.assertErrorResponse(response, 400, "No access");
     }
 
     @Test
@@ -226,7 +191,7 @@ public class CreatePlaylistTests {
 
         Response response = CreatePlaylistRequest
                 .createPlaylistWithError(SpotifyProperties.getUserId(), token, playlistRequest);
-        assertErrorResponse(response, 400, "Error parsing JSON");
+        MyAssertions.assertErrorResponse(response, 400, "Error parsing JSON");
     }
 
     @Test
@@ -309,13 +274,8 @@ public class CreatePlaylistTests {
                 .as("Playlist should be collaborative")
                 .isTrue();
 
-        ArrayList<String> uris = new ArrayList<>();
-        uris.add(SampleNames.trackId);
-        AddItemsToPlaylistRequestDto items = new AddItemsToPlaylistRequestDto();
-        items.setUris(uris);
-
         // Step - the other user adds tack to collaborative playlist
-        AddItemsToPlaylistRequest.addItems(playlistId, tokenOfOtherUser, items);
+        AddItemsToPlaylistRequest.addItems(playlistId, tokenOfOtherUser, List.of(SampleNames.trackUri));
     }
 
     @Test
@@ -344,14 +304,10 @@ public class CreatePlaylistTests {
                 .as("Playlist should not be collaborative")
                 .isFalse();
 
-        ArrayList<String> uris = new ArrayList<>();
-        uris.add("spotify:track:7Lf7oSEVdzZqTA0kEDSlS5");
-        AddItemsToPlaylistRequestDto items = new AddItemsToPlaylistRequestDto();
-        items.setUris(uris);
-
         // Step - the other user should not be able to add track to no-collaborative playlist
-        Response response = AddItemsToPlaylistRequest.addItemsWithError(playlistId, tokenOfOtherUser, items);
-        assertErrorResponse(response, 403, "You cannot add tracks to a playlist you don't own");
+        Response response = AddItemsToPlaylistRequest
+                .addItemsWithError(playlistId, tokenOfOtherUser, List.of("spotify:track:7Lf7oSEVdzZqTA0kEDSlS5"));
+        MyAssertions.assertErrorResponse(response, 403, "You cannot add tracks to a playlist you don't own");
     }
 
     @Test
@@ -387,7 +343,7 @@ public class CreatePlaylistTests {
 
         Response response = CreatePlaylistRequest
                 .createPlaylistWithError(SpotifyProperties.getUserId(), token, playlistRequest);
-        assertErrorResponse(response, 400, "Collaborative playlists can only be private");
+        MyAssertions.assertErrorResponse(response, 400, "Collaborative playlists can only be private");
     }
 
     @Test
@@ -400,7 +356,7 @@ public class CreatePlaylistTests {
 
         Response response = CreatePlaylistRequest
                 .createPlaylistWithError(SpotifyProperties.getUserId(), token, playlistRequest);
-        assertErrorResponse(response, 400, "Error parsing JSON");
+        MyAssertions.assertErrorResponse(response, 400, "Error parsing JSON");
     }
 
     @Test
@@ -410,7 +366,7 @@ public class CreatePlaylistTests {
         playlistRequest.setName(SampleNames.playlistName);
         Response response = CreatePlaylistRequest
                 .createPlaylistWithError("invalid", token, playlistRequest);
-        assertErrorResponse(response, 403, "You cannot create a playlist for another user");
+        MyAssertions.assertErrorResponse(response, 403, "You cannot create a playlist for another user");
     }
 
     @Test
@@ -420,7 +376,7 @@ public class CreatePlaylistTests {
         playlistRequest.setName(SampleNames.playlistName);
         Response response = CreatePlaylistRequest
                 .createPlaylistWithError("", token, playlistRequest);
-        assertErrorResponse(response, 404, "Service not found");
+        MyAssertions.assertErrorResponse(response, 404, "Service not found");
     }
 
     @Test
@@ -430,7 +386,7 @@ public class CreatePlaylistTests {
         playlistRequest.setName(SampleNames.playlistName);
         Response response = CreatePlaylistRequest
                 .createPlaylistWithError(SpotifyProperties.getUserId(), "", playlistRequest);
-        assertErrorResponse(response, 400, "Only valid bearer authentication supported");
+        MyAssertions.assertErrorResponse(response, 400, "Only valid bearer authentication supported");
     }
 
     @Test
@@ -440,7 +396,7 @@ public class CreatePlaylistTests {
         playlistRequest.setName(SampleNames.playlistName);
         Response response = CreatePlaylistRequest
                 .createPlaylistWithError(SpotifyProperties.getUserId(), "invalid", playlistRequest);
-        assertErrorResponse(response, 401, "Invalid access token");
+        MyAssertions.assertErrorResponse(response, 401, "Invalid access token");
     }
 
 }

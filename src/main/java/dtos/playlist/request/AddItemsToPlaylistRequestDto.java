@@ -5,14 +5,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Setter;
 import lombok.ToString;
 
-import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @ToString
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AddItemsToPlaylistRequestDto {
     @JsonProperty("position")
-    private String position;
+    private int position;
     @JsonProperty("uris")
-    private ArrayList<String> uris;
+    private List<String> uris;
 }

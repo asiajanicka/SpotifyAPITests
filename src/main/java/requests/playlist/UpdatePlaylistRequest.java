@@ -8,7 +8,6 @@ import java.util.HashMap;
 import static io.restassured.RestAssured.given;
 
 public class UpdatePlaylistRequest {
-
     public static UpdatePlaylistRequest updatePlaylist(String playlistId, String token, String name){
         HashMap bodyParams = new HashMap<String, String>();
         bodyParams.put("name", name);

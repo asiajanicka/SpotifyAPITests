@@ -9,7 +9,6 @@ import urls.Endpoint;
 import static io.restassured.RestAssured.given;
 
 public class CreatePlaylistRequest {
-
     public static CreatePlaylistResponseDto createPlaylist(String userId, String token, String name){
         CreatePlaylistRequestDto playlistRequest = new CreatePlaylistRequestDto();
         playlistRequest.setName(name);
@@ -23,6 +22,10 @@ public class CreatePlaylistRequest {
                 .extract()
                 .response()
                 .as(CreatePlaylistResponseDto.class);
+    }
+
+    public static String getPlaylistId(String userId, String token, String name){
+        return createPlaylist(userId, token, name).getId();
     }
 
     public static CreatePlaylistResponseDto createPlaylist(String userId, String token, CreatePlaylistRequestDto playlistDto){

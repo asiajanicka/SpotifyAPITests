@@ -10,7 +10,6 @@ import utils.SpotifyProperties;
 public class SpecBuilder {
 
     public static RequestSpecification getRequestSpec(){
-
         return new RequestSpecBuilder()
                 .setBaseUri(SpotifyProperties.getBaseUrl())
                 .setContentType(ContentType.JSON)

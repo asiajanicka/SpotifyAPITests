@@ -13,8 +13,7 @@ public class Endpoint {
     public static final String FOLLOWERS = "/followers";
     public static final String TRACKS = "/tracks";
 
-    public static String getPlaylist(String playlistId){
-        return PLAYLISTS + "/" + playlistId;
+    public static String getPlaylist(String playlistId){return PLAYLISTS + "/" + playlistId;
     }
     public static String getPlaylists(String userId){
         return USERS + "/" + userId + PLAYLISTS;

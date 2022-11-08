@@ -23,4 +23,6 @@ public class BasePlaylistResponseDto {
     protected String type;
     @JsonProperty("owner")
     protected BaseOwnerResponseDto owner;
+    @JsonProperty("tracks")
+    protected BaseTracksResponseDto tracks;
 }
