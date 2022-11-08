@@ -1,5 +1,6 @@
 package tests.playlists;
 
+import dtos.playlist.request.CreatePlaylistRequestDto;
 import dtos.playlist.response.ReadPlaylistItemsResponseDto;
 import dtos.playlist.response.ReadPlaylistResponseDto;
 import dtos.playlist.response.base.BaseItemsResponseDto;
@@ -28,12 +29,12 @@ import java.util.stream.Stream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 public class AddItemsToPlaylistTests extends BasePlaylistTests {
-
     private static BaseTrackTestDataFromCSVReader testDataTracks;
 
     @BeforeAll
     public static void setUp() {
         token = TokenManager.getToken();
+        tokenOfOtherUser = TokenManager.getOtherUserToken();
         testDataTracks = new BaseTrackTestDataFromCSVReader();
     }
 
@@ -253,7 +254,7 @@ public class AddItemsToPlaylistTests extends BasePlaylistTests {
     @DisplayName("ATTP7 Add single track to populated playlist at position greater or equal to limit")
     public void ATTP7_addSingleTrackToPlaylistAtPositionHigherThanLimitTest(int position) {
         int expectedNumberOfTracks = 104;
-        int limit = 100;
+        int limit = SpotifyProperties.getLimitOfTrackPerRequestInPlaylist();
 
         //  Prerequisite - create a playlist
         playlistId = CreatePlaylistRequest
@@ -538,7 +539,7 @@ public class AddItemsToPlaylistTests extends BasePlaylistTests {
     public void ATTP16_addTracksToPopulatedPlaylistPartiallyShiftedTest(int numberOfTrackToAdd, int position) {
         int numberOfPrerequisiteTracks = 100;
         int expectedNumberOfTracks = numberOfPrerequisiteTracks + numberOfTrackToAdd;
-        int limit = 100;
+        int limit = SpotifyProperties.getLimitOfTrackPerRequestInPlaylist();
 
         //  Prerequisite - create a playlist
         playlistId = CreatePlaylistRequest
@@ -590,7 +591,7 @@ public class AddItemsToPlaylistTests extends BasePlaylistTests {
     public void ATTP17_addTracksToPopulatedPlaylistAtNextPageTest(int numberOfTrackToAdd, int position) {
         int numberOfPrerequisiteTracks = 103;
         int expectedNumberOfTracks = numberOfPrerequisiteTracks + numberOfTrackToAdd;
-        int limit = 100;
+        int limit = SpotifyProperties.getLimitOfTrackPerRequestInPlaylist();
 
         //  Prerequisite - create a playlist
         playlistId = CreatePlaylistRequest
@@ -628,7 +629,7 @@ public class AddItemsToPlaylistTests extends BasePlaylistTests {
         int numberOfTrackToAdd = 100;
         int position = 2;
         int expectedNumberOfTracks = numberOfPrerequisiteTracks + numberOfTrackToAdd;
-        int limit = 100;
+        int limit = SpotifyProperties.getLimitOfTrackPerRequestInPlaylist();
 
         //  Prerequisite - create a playlist
         playlistId = CreatePlaylistRequest
@@ -706,8 +707,6 @@ public class AddItemsToPlaylistTests extends BasePlaylistTests {
     })
     @DisplayName("ATTP20 Shift tracks in current page when tracks added to playlist")
     public void ATTP20_shiftTracksInCurrentPageWhenTracksAddedToPlaylistTest(int prerequisite, int added, int position) {
-        int limit = 100;
-
         // test data should fulfill following condition (position < limit - added && prerequisite + added <= limit)
 
         //  Prerequisite - create a playlist
@@ -736,7 +735,7 @@ public class AddItemsToPlaylistTests extends BasePlaylistTests {
     })
     @DisplayName("ATTP21 Shift tracks partially from current to next page when tracks added to playlist")
     public void ATTP21_shiftTracksPartiallyWhenTracksAddedToPlaylistTest(int prerequisite, int added, int position) {
-        int limit = 100;
+        int limit = SpotifyProperties.getLimitOfTrackPerRequestInPlaylist();
 
         // test data must fulfill following condition (position < limit - added && prerequisite + added > limit)
 
@@ -775,7 +774,8 @@ public class AddItemsToPlaylistTests extends BasePlaylistTests {
     })
     @DisplayName("ATTP22 Shift tracks only in next page when tracks added to playlist")
     public void ATTP22_shiftTracksOnlyInNextPageWhenTracksAddedToPlaylistTest(int prerequisite, int added, int position) {
-        int limit = 100;
+        int limit = SpotifyProperties.getLimitOfTrackPerRequestInPlaylist();
+
         //  Prerequisite - create a playlist
         playlistId = CreatePlaylistRequest
                 .getPlaylistId(SpotifyProperties.getUserId(), token, SampleNames.playlistName);
@@ -967,5 +967,51 @@ public class AddItemsToPlaylistTests extends BasePlaylistTests {
                 Arguments.arguments(SampleNames.playlistUri, "playlist uri"),
                 Arguments.arguments(SampleNames.showUri, "show uri")
         );
+    }
+
+    @ParameterizedTest(name = "{displayName} => public: {0}")
+    @ValueSource(strings = {"true", "false"})
+    @DisplayName("ATTP33 Don't add items to other user's non collaborative playlist")
+    public void ATTP33_dontAddItemsToOtherUsersNonCollaborativePlaylistTest(String isPublic) {
+        CreatePlaylistRequestDto playlistDto = new CreatePlaylistRequestDto();
+        playlistDto.setName(SampleNames.playlistName);
+        playlistDto.setIsPublic(isPublic);
+        playlistDto.setIsCollaborative("false");
+
+        //  Prerequisite - create a playlist
+        playlistId = CreatePlaylistRequest
+                .getPlaylistId(SpotifyProperties.getUserId(), token, playlistDto);
+
+        // Step - try to add track to other user's playlist
+        Track track = testDataTracks.getTracks().get(0);
+        Response response = AddItemsToPlaylistRequest
+                .addItemsWithError(playlistId, tokenOfOtherUser, List.of(track.getUri()));
+
+        MyAssertions.assertErrorResponse(response, 403, "You cannot add tracks to a playlist you don't own.");
+    }
+
+    @Test
+    @DisplayName("ATTP34 Add items to other user's private collaborative playlist")
+    public void ATTP34_addItemsToOtherUsersPrivateCollaborativePlaylistTest() {
+        CreatePlaylistRequestDto playlistDto = new CreatePlaylistRequestDto();
+        playlistDto.setName(SampleNames.playlistName);
+        playlistDto.setIsPublic("false");
+        playlistDto.setIsCollaborative("true");
+
+        //  Prerequisite - create a playlist
+        playlistId = CreatePlaylistRequest
+                .getPlaylistId(SpotifyProperties.getUserId(), token, playlistDto);
+
+        // Step - add track to other user's playlist
+        Track track = testDataTracks.getTracks().get(0);
+
+        AddItemsToPlaylistRequest
+                .addItems(playlistId, tokenOfOtherUser, List.of(track.getUri()));
+
+        // Step - read playlist and check if track was added
+        ReadPlaylistResponseDto readPlaylistResponse = ReadPlaylistRequest
+                .readPlaylist(token, playlistId);
+        List<Track> trackListFromResponse = getTracksFromReadPlaylistResponse(readPlaylistResponse);
+        assertThat(trackListFromResponse).containsExactlyElementsOf(Arrays.asList(track));
     }
 }

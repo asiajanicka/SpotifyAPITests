@@ -41,6 +41,10 @@ public class CreatePlaylistRequest {
                 .as(CreatePlaylistResponseDto.class);
     }
 
+    public static String getPlaylistId(String userId, String token, CreatePlaylistRequestDto playlistDto){
+        return createPlaylist(userId, token, playlistDto).getId();
+    }
+
     public static Response createPlaylistWithError(String userId, String token, String name){
         CreatePlaylistRequestDto playlistRequest = new CreatePlaylistRequestDto();
         playlistRequest.setName(name);

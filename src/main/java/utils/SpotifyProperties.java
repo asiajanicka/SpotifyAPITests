@@ -42,4 +42,6 @@ public class SpotifyProperties {
     public static String getOtherRefreshToken(){
         return getProperties("other.refreshToken");
     }
+    public static int getLimitOfTrackPerRequestInPlaylist() { return Integer
+            .parseInt(getProperties("playlist.limitOfTracksPerRequest"));}
 }
